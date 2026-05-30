@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QComboBox, QTableWidget , QHeaderView , QTableWidgetItem
 from storage.excel import load_cases
+from add_cases import add_case
 
 
 class all_case(QWidget):
@@ -26,6 +27,9 @@ class all_case(QWidget):
         self.table.setHorizontalHeaderLabels(['Client/Employee', 'Notes', 'Status', 'Deadline'])
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.table_insert()
+
+
+
 
     def table_insert(self):
         for row in load_cases():

@@ -1,9 +1,10 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QFormLayout, QLineEdit, QTextEdit, QDateEdit, QComboBox, QPushButton
 from storage.excel import save_cases
-from PySide6.QtCore import QDate
+from PySide6.QtCore import QDate, Signal
 
 
 class add_case(QWidget):
+    case_signal = Signal()
     def __init__(self):
         super().__init__()
         self.main_layout = QVBoxLayout()
@@ -28,7 +29,6 @@ class add_case(QWidget):
         self.client.textChanged.connect(self.check_form)
         self.note.textChanged.connect(self.check_form)
 
-
     def check_form(self):
         if self.client.text() and self.note.toPlainText():
             self.save_btn.setEnabled(True)
@@ -48,3 +48,6 @@ class add_case(QWidget):
         self.note.clear()
         self.status.clear()
         self.deadline.clear()
+        self.case_signal.emit()
+
+
