@@ -1,6 +1,5 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QComboBox, QTableWidget , QHeaderView , QTableWidgetItem
 from storage.excel import load_cases
-from add_cases import add_case
 
 
 class all_case(QWidget):
@@ -32,6 +31,7 @@ class all_case(QWidget):
 
 
     def table_insert(self):
+        self.table.setRowCount(0)
         for row in load_cases():
             row_position = self.table.rowCount()
             self.table.insertRow(row_position)

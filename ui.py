@@ -14,13 +14,18 @@ class MainWindow(QWidget):
         # now setting all case add cases and stats button these are the tabs.
         self.tab = QTabWidget()
         self.main_layout.addWidget(self.tab)
-        self.tab.addTab(all_case(), 'All Cases')
-        self.tab.addTab(add_case(),'Add Case')
+        self.all_tab = all_case()
+        self.add_tab = add_case()
+        self.tab.addTab(self.all_tab, 'All Cases')
+        self.tab.addTab(self.add_tab,'Add Case')
+        self.add_tab.case_signal.connect(self.all_tab.table_insert)
         self.tab.setStyleSheet((f"""
             QTabBar::tab {{ width: {800 // 2}px; }}
             QTabBar::tab:selected {{ border: 2px solid white; }}
         """))
         self.tab.tabBar().setUsesScrollButtons(False)
+
+
 
 
 
