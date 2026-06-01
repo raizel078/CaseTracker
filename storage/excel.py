@@ -1,6 +1,7 @@
 from pathlib import Path
 import openpyxl as ax
 
+
 root_dir = Path('/home/nowa/Desktop/new ML/CaseTracker/storage/cases.xlsx')
 
 def save_cases(client, note, status, deadline):
@@ -21,3 +22,11 @@ def load_cases():
     wb = ax.load_workbook(root_dir)
     ws = wb.active
     return list(ws.iter_rows(min_row=2, values_only=True))
+
+def update_case(row, column, new_value):
+    wb =ax.load_workbook(root_dir)
+    ws = wb.active
+    ws.cell(row+2, column+1).value = new_value
+    wb.save(root_dir)
+
+
