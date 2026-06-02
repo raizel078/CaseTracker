@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QComboBox, QLabel
 from PySide6.QtWidgets import QTableWidget, QHeaderView, QTableWidgetItem, QPushButton
 from storage.excel import load_cases, update_case
+from PySide6.QtCore import Qt
 
 
 class all_case(QWidget):
@@ -31,6 +32,7 @@ class all_case(QWidget):
         self.main_layout.addWidget(self.table)
         self.table.setHorizontalHeaderLabels(['Client/Employee', 'Notes', 'Status', 'Deadline'])
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.table.setMinimumHeight(100)
         self.table_insert()
 
         self.third_layout = QHBoxLayout()
@@ -66,6 +68,7 @@ class all_case(QWidget):
         me = all_status.count('Waiting Me.')
         client = all_status.count('Waiting Client')
         self.status_label.setText(f'Done:{done}  Waiting Dep:{dep}  Waiting Me:{me}  Waiting Client: {client}')
+        self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
     def apply_status_filter(self):
         self.status_filter = self.status.currentText()

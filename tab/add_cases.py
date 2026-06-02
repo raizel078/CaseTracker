@@ -21,6 +21,7 @@ class add_case(QWidget):
         self.deadline.setDate(QDate.currentDate())
         self.form.addRow('Deadline', self.deadline)
         self.note = QTextEdit()
+        self.note.setMinimumHeight(60)
         self.form.addRow('Notes', self.note)
         self.save_btn = QPushButton('Save Case')
         self.main_layout.addWidget(self.save_btn)
