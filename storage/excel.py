@@ -2,7 +2,7 @@ from pathlib import Path
 import openpyxl as ax
 
 
-root_dir = Path('/home/nowa/Desktop/new ML/CaseTracker/storage/cases.xlsx')
+root_dir = Path(__file__).parent / 'cases.xlsx'
 
 def save_cases(client, note, status, deadline):
     if not root_dir.exists():
