@@ -16,7 +16,8 @@ class MainWindow(QWidget):
         self.main_layout.addWidget(self.tab)
 
         self.all_tab = all_case()
-        self.add_tab = add_case()
+        case = add_case()
+        self.add_tab = case
         self.tab.addTab(self.all_tab, 'All Cases')
         self.tab.addTab(self.add_tab, 'Add Case')
         self.add_tab.case_signal.connect(self.all_tab.table_insert)

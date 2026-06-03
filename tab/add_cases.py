@@ -47,8 +47,8 @@ class add_case(QWidget):
         save_cases(client, notes, status, deadline)
         self.client.clear()
         self.note.clear()
-        self.status.clear()
-        self.deadline.clear()
+        self.status.setCurrentIndex(0)
+        self.deadline.setDate(QDate.currentDate())
         self.case_signal.emit()
 
 
