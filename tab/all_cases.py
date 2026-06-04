@@ -2,8 +2,6 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QCom
 from PySide6.QtWidgets import QTableWidget, QHeaderView, QTableWidgetItem, QPushButton
 from storage.excel import load_cases, update_case
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor, QFont
-from datetime import datetime, date
 
 
 class all_case(QWidget):
@@ -49,41 +47,6 @@ class all_case(QWidget):
         self.table.cellChanged.connect(self.show_save_btn)
         self.count_status()
 
-    def parse_deadline(self, deadline_text):
-        try:
-            return datetime.strptime(str(deadline_text), '%Y-%m-%d').date()
-        except (ValueError, TypeError):
-            return None
-
-    def apply_row_style(self, row):
-        deadline_item = self.table.item(row, 3)
-        combo = self.table.cellWidget(row, 2)
-        status_value = combo.currentText() if combo else ''
-        deadline_value = self.parse_deadline(deadline_item.text() if deadline_item else None)
-        is_done = status_value == 'Done'
-
-        text_color = QColor('black')
-        if is_done:
-            text_color = QColor('gray')
-        elif deadline_value and deadline_value < date.today():
-            text_color = QColor('red')
-
-        for column in [0, 1, 3]:
-            item = self.table.item(row, column)
-            if item:
-                item.setForeground(text_color)
-                font = item.font()
-                font.setStrikeOut(is_done)
-                item.setFont(font)
-
-        self.table.setRowHeight(row, 24)
-
-        if combo:
-            combo_font = combo.font()
-            combo_font.setStrikeOut(is_done)
-            combo.setFont(combo_font)
-            combo.setStyleSheet(f'color: {text_color.name()};')
-
     def apply_search(self):
         search_text = self.search_bar.text().lower()
         for row in range(self.table.rowCount()):
@@ -124,8 +87,7 @@ class all_case(QWidget):
         self.edited_value = self.table.item(row, column).text()
 
     def save_handler(self):
-        source_row = self.row_source_map[self.edited_row]
-        update_case(source_row, self.edited_column, self.edited_value)
+        update_case(self.edited_row, self.edited_column, self.edited_value)
         self.save_btn.setVisible(False)
         self.count_status()
 
@@ -134,19 +96,13 @@ class all_case(QWidget):
         self.edited_row = row
         self.edited_column = column
         self.edited_value = text
-        self.apply_row_style(row)
         self.count_status()
 
     def table_insert(self):
         self.table.setRowCount(0)
-        raw_rows = list(enumerate(load_cases()))
-        raw_rows.sort(key=lambda x: self.parse_deadline(x[1][3]) or date.max)
-        self.row_source_map = []
-
-        for source_row, row in raw_rows:
+        for row in load_cases():
             row_position = self.table.rowCount()
             self.table.insertRow(row_position)
-            self.row_source_map.append(source_row)
             self.table.setItem(row_position, 0, QTableWidgetItem(str(row[0])))
             self.table.setItem(row_position, 1, QTableWidgetItem(str(row[1])))
             combo = QComboBox()
@@ -155,4 +111,3 @@ class all_case(QWidget):
             combo.currentTextChanged.connect(lambda text, r=row_position: self.combo_changed(r, 2, text))
             self.table.setCellWidget(row_position, 2, combo)
             self.table.setItem(row_position, 3, QTableWidgetItem(str(row[3])))
-            self.apply_row_style(row_position)
