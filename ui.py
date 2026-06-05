@@ -6,7 +6,7 @@ from tab.add_cases import add_case
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('Case follow up Tracker')
+        self.setWindowTitle('Follow Up Tracker-by Nowa.')
         self.resize(800, 500)
 
         self.main_layout = QVBoxLayout()
