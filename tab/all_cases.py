@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QComboBox, QLabel
-from PySide6.QtWidgets import QTableWidget, QHeaderView, QTableWidgetItem, QPushButton
+from PySide6.QtWidgets import QTableWidget, QHeaderView, QTableWidgetItem, QPushButton, QMessageBox
 from storage.excel import load_cases, update_case
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QFont
@@ -9,6 +9,8 @@ from datetime import datetime, date
 class all_case(QWidget):
     def __init__(self):
         super().__init__()
+        self.pending_changes = {}
+
         #main layout
         self.main_layout = QVBoxLayout()
         self.second_layout = QHBoxLayout()
@@ -87,8 +89,12 @@ class all_case(QWidget):
     def apply_search(self):
         search_text = self.search_bar.text().lower()
         for row in range(self.table.rowCount()):
-            client = self.table.item(row, 0).text().lower()
-            note = self.table.item(row, 1).text().lower()
+            client_item = self.table.item(row, 0)
+            note_item = self.table.item(row, 1)
+
+            client = client_item.text().lower() if client_item else ''
+            note = note_item.text().lower() if note_item else ''
+
             if search_text in client or search_text in note:
                 self.table.setRowHidden(row, False)
             else:
@@ -98,8 +104,10 @@ class all_case(QWidget):
         all_status = []
         for row in range(self.table.rowCount()):
             combo = self.table.cellWidget(row, 2)
-            status_value = combo.currentText()
-            all_status.append(status_value)
+            if combo:
+                status_value = combo.currentText()
+                all_status.append(status_value)
+
         done = all_status.count('Done')
         dep = all_status.count('Waiting Dep')
         me = all_status.count('Waiting Me')
@@ -111,6 +119,9 @@ class all_case(QWidget):
         self.status_filter = self.status.currentText()
         for row in range(self.table.rowCount()):
             combo = self.table.cellWidget(row, 2)
+            if not combo:
+                continue
+
             status_value = combo.currentText()
             if self.status_filter == 'All Status' or status_value == self.status_filter:
                 self.table.setRowHidden(row, False)
@@ -118,23 +129,70 @@ class all_case(QWidget):
                 self.table.setRowHidden(row, True)
 
     def show_save_btn(self, row, column):
+        item = self.table.item(row, column)
+        if item is None:
+            return
+
+        if row >= len(self.row_source_map):
+            return
+
+        source_row = self.row_source_map[row]
+        self.pending_changes[(source_row, column)] = item.text()
         self.save_btn.setVisible(True)
-        self.edited_row = row
-        self.edited_column = column
-        self.edited_value = self.table.item(row, column).text()
 
     def save_handler(self):
-        source_row = self.row_source_map[self.edited_row]
-        update_case(source_row, self.edited_column, self.edited_value)
+        if not self.pending_changes:
+            self.save_btn.setVisible(False)
+            return
+
+        try:
+            for (source_row, column), value in self.pending_changes.items():
+                update_case(source_row, column, value)
+        except PermissionError:
+            QMessageBox.critical(
+                self,
+                'Excel file is open',
+                'Please close cases.xlsx in Excel, then try saving again.'
+            )
+            return
+        except Exception as error:
+            QMessageBox.critical(
+                self,
+                'Save failed',
+                f'Could not save changes:\n{error}'
+            )
+            return
+
+        self.pending_changes.clear()
         self.save_btn.setVisible(False)
+
+        for row in range(self.table.rowCount()):
+            self.apply_row_style(row)
+
         self.count_status()
 
-    def combo_changed(self, row, column, text):
+    def combo_changed(self, text):
+        combo = self.sender()
+        if combo is None:
+            return
+
+        changed_row = -1
+        for row in range(self.table.rowCount()):
+            if self.table.cellWidget(row, 2) == combo:
+                changed_row = row
+                break
+
+        if changed_row == -1:
+            return
+
+        if changed_row >= len(self.row_source_map):
+            return
+
+        source_row = self.row_source_map[changed_row]
+        self.pending_changes[(source_row, 2)] = text
+
         self.save_btn.setVisible(True)
-        self.edited_row = row
-        self.edited_column = column
-        self.edited_value = text
-        self.apply_row_style(row)
+        self.apply_row_style(changed_row)
         self.count_status()
 
     def table_insert(self):
@@ -147,15 +205,20 @@ class all_case(QWidget):
             row_position = self.table.rowCount()
             self.table.insertRow(row_position)
             self.row_source_map.append(source_row)
+
             self.table.setItem(row_position, 0, QTableWidgetItem(str(row[0])))
             self.table.setItem(row_position, 1, QTableWidgetItem(str(row[1])))
+
             combo = QComboBox()
             combo.addItems(['Done', 'Waiting Dep', 'Waiting Me', 'Waiting Client'])
+
             status_text = str(row[2])
             if status_text == 'Waiting Me.':
                 status_text = 'Waiting Me'
+
             combo.setCurrentText(status_text)
-            combo.currentTextChanged.connect(lambda text, r=row_position: self.combo_changed(r, 2, text))
+            combo.currentTextChanged.connect(self.combo_changed)
             self.table.setCellWidget(row_position, 2, combo)
+
             self.table.setItem(row_position, 3, QTableWidgetItem(str(row[3])))
             self.apply_row_style(row_position)
